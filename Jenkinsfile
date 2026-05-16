@@ -6,33 +6,32 @@ pipeline{
                 echo "========executing checkout========"
                 checkout scm
             }
-        }            
-        stage("setup environment"){
+        }  
+
+        stage('Install Dependencies'){
             steps{
+                script{
+                    bat 'python -m pip install -r requirements.txt'
+                }
+            }
+        }          
+        stage("build docker image"){
+            steps{
+                script{
                   echo "========executing settingup environment========"
-                bat '''
-                python -m venv .venv1
-                call .venv1\\Scripts\\activate
-                pip install -r requirements.txt
-                '''
+                  bat 'docker build -t flask-jenkins-sqlite-image:latest .'
+                }
             }
         }
-        stage("run tests"){
+        
+        stage("Deploy Docker Container"){
             steps{
-                bat '''
-                echo "========executing unittests========"
-                call .venv1\\Scripts\\activate
-                pytest tests/
-                '''
-            }
-        }
-        stage("Deploy"){
-            steps{
-                bat '''
-                 echo "========deploying========"
-                 start /B python app.py   
-                '''
+                script{
+                  bat 'docker run -d -p 9091:5000 --name flask-sqlite-container flask-jenkins-sqlite-image:latest'
+                }
             }
         }
     }
-}    
+}     
+    
+        
